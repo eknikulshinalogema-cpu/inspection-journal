@@ -3,10 +3,8 @@
     "description": "Электронный журнал осмотра помещений и оборудования (Bitrix24 Vibecode app)",
     "type": "project",
     "require": {
-        "php": ">=8.0",
-        "bitrix24/bitrix24-php-sdk": "^2.0",
-        "ext-pdo": "*",
-        "ext-pdo_sqlite": "*"
+        "php": ">=8.2",
+        "bitrix24/b24phpsdk": "^2.0"
     },
     "autoload": {
         "psr-4": {
