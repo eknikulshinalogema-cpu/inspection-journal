@@ -1,6 +1,16 @@
 <?php
 
-require __DIR__ . '/../vendor/autoload.php';
+spl_autoload_register(function ($class) {
+    $prefix = 'App\\';
+    if (strncmp($prefix, $class, strlen($prefix)) !== 0) {
+        return;
+    }
+    $relative = substr($class, strlen($prefix));
+    $file = __DIR__ . '/../src/' . str_replace('\\', '/', $relative) . '.php';
+    if (file_exists($file)) {
+        require $file;
+    }
+});
 
 use App\Auth;
 use App\JournalRepository;
