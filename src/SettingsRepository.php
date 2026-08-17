@@ -41,33 +41,28 @@ class SettingsRepository
         return (int) $this->pdo->lastInsertId();
     }
 
-    public function accessGroups(): array
+    public function accessUsers(): array
     {
-        $stmt = $this->pdo->query('SELECT * FROM access_groups ORDER BY id ASC');
+        $stmt = $this->pdo->query('SELECT * FROM access_users ORDER BY id ASC');
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    public function saveAccessGroup(int $b24GroupId, string $name, bool $canView, bool $canEdit): void
+    public function saveAccessUser(int $b24UserId, string $name, bool $canView, bool $canEdit): void
     {
-        $stmt = $this->pdo->prepare('SELECT id FROM access_groups WHERE b24_group_id = :gid');
-        $stmt->execute([':gid' => $b24GroupId]);
+        $stmt = $this->pdo->prepare('SELECT id FROM access_users WHERE b24_user_id = :uid');
+        $stmt->execute([':uid' => $b24UserId]);
         $existing = $stmt->fetchColumn();
 
         if ($existing) {
             $upd = $this->pdo->prepare(
-                'UPDATE access_groups SET group_name = :name, can_view = :view, can_edit = :edit WHERE id = :id'
+                'UPDATE access_users SET user_name = :name, can_view = :view, can_edit = :edit WHERE id = :id'
             );
-            $upd->execute([
-                ':name' => $name, ':view' => $canView ? 1 : 0, ':edit' => $canEdit ? 1 : 0, ':id' => $existing,
-            ]);
+            $upd->execute([':name' => $name, ':view' => $canView ? 1 : 0, ':edit' => $canEdit ? 1 : 0, ':id' => $existing]);
         } else {
             $ins = $this->pdo->prepare(
-                'INSERT INTO access_groups (b24_group_id, group_name, can_view, can_edit)
-                 VALUES (:gid, :name, :view, :edit)'
+                'INSERT INTO access_users (b24_user_id, user_name, can_view, can_edit) VALUES (:uid, :name, :view, :edit)'
             );
-            $ins->execute([
-                ':gid' => $b24GroupId, ':name' => $name, ':view' => $canView ? 1 : 0, ':edit' => $canEdit ? 1 : 0,
-            ]);
+            $ins->execute([':uid' => $b24UserId, ':name' => $name, ':view' => $canView ? 1 : 0, ':edit' => $canEdit ? 1 : 0]);
         }
     }
 }
