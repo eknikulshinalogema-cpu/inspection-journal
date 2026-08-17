@@ -66,25 +66,26 @@
 </form>
 
 <h2>Права доступа групп</h2>
-<?php if (empty($groups)): ?>
-  <p>Список групп/отделов Битрикс24 недоступен (department.get не вернул данные).</p>
+<h2>Права доступа пользователей</h2>
+<?php if (empty($portalUsers)): ?>
+  <p>Список пользователей портала недоступен.</p>
 <?php else: ?>
   <form method="post">
     <input type="hidden" name="action" value="save_access">
     <table>
       <thead>
-        <tr><th>Группа</th><th style="width:100px;">Просмотр</th><th style="width:100px;">Редактирование</th></tr>
+        <tr><th>Пользователь</th><th style="width:100px;">Просмотр</th><th style="width:100px;">Редактирование</th></tr>
       </thead>
       <tbody>
-        <?php foreach ($groups as $g): ?>
-          <?php $existing = $accessByGroup[$g['id']] ?? null; ?>
+        <?php foreach ($portalUsers as $u): ?>
+          <?php $existing = $accessByUser[$u['id']] ?? null; ?>
           <tr>
             <td>
-              <?= e($g['name']) ?>
-              <input type="hidden" name="groups[<?= (int) $g['id'] ?>][name]" value="<?= e($g['name']) ?>">
+              <?= e($u['name']) ?>
+              <input type="hidden" name="users[<?= (int) $u['id'] ?>][name]" value="<?= e($u['name']) ?>">
             </td>
-            <td><input type="checkbox" name="groups[<?= (int) $g['id'] ?>][can_view]" <?= (!$existing || $existing['can_view']) ? 'checked' : '' ?>></td>
-            <td><input type="checkbox" name="groups[<?= (int) $g['id'] ?>][can_edit]" <?= ($existing && $existing['can_edit']) ? 'checked' : '' ?>></td>
+            <td><input type="checkbox" name="users[<?= (int) $u['id'] ?>][can_view]" <?= (!$existing || $existing['can_view']) ? 'checked' : '' ?>></td>
+            <td><input type="checkbox" name="users[<?= (int) $u['id'] ?>][can_edit]" <?= ($existing && $existing['can_edit']) ? 'checked' : '' ?>></td>
           </tr>
         <?php endforeach; ?>
       </tbody>
@@ -93,6 +94,7 @@
       <button type="submit">Сохранить права доступа</button>
     </div>
   </form>
+<?php endif; ?>
 <?php endif; ?>
 
 </body>
