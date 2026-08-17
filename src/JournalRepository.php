@@ -132,4 +132,12 @@ class JournalRepository
         $stmt->execute([':from' => $from, ':to' => $to]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
+    public function delete(int $journalId): void
+    {
+        $stmt = $this->pdo->prepare('DELETE FROM journal_items WHERE journal_id = :id');
+        $stmt->execute([':id' => $journalId]);
+
+        $stmt = $this->pdo->prepare('DELETE FROM journals WHERE id = :id');
+        $stmt->execute([':id' => $journalId]);
+    }
 }
