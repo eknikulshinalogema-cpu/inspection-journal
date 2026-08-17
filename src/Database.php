@@ -71,10 +71,10 @@ class Database
         ");
 
         $pdo->exec("
-            CREATE TABLE IF NOT EXISTS access_groups (
+            CREATE TABLE IF NOT EXISTS access_users (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                b24_group_id INTEGER NOT NULL,
-                group_name TEXT,
+                b24_user_id INTEGER NOT NULL UNIQUE,
+                user_name TEXT,
                 can_view INTEGER NOT NULL DEFAULT 1,
                 can_edit INTEGER NOT NULL DEFAULT 0
             )
