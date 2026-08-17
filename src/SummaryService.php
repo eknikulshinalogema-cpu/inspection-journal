@@ -6,61 +6,60 @@ class SummaryService
 {
     private const STOP_WORDS = ['и', 'в', 'на', 'с', 'а', 'но', 'по', 'к', 'у', 'о', 'от', 'из', 'за', 'не', 'до', 'же', 'то', 'это'];
 
-    /** Short summary text for one journal's rows, used in the main list. */
+    private const NORM_FAULTY = 'Исправен';
+    private const NORM_LIGHTING = 'Отключено';
+    private const NORM_MIN_SCORE = 4;
+
+    /** Отклонения для одной строки: пусто, если строка соответствует норме. */
+    private static function rowDeviations(array $item): array
+    {
+        $deviations = [];
+
+        $faulty = $item['is_faulty'] ?? null;
+        if ($faulty !== null && $faulty !== '' && $faulty !== self::NORM_FAULTY) {
+            $deviations[] = 'исправность: ' . $faulty;
+        }
+
+        $lighting = $item['lighting'] ?? null;
+        if ($lighting !== null && $lighting !== '' && $lighting !== self::NORM_LIGHTING) {
+            $deviations[] = 'освещение: ' . $lighting;
+        }
+
+        $score = $item['sanitary_score'];
+        if ($score !== null && $score !== '' && (int) $score < self::NORM_MIN_SCORE) {
+            $deviations[] = 'санитарное состояние: ' . (int) $score;
+        }
+
+        return $deviations;
+    }
+
+    /** Полная выжимка по журналу: название строки + что не так, либо "Норма". */
     public static function summarizeItems(array $items): string
     {
-        $hasSanitaryViolation = false;
-        $hasFault = false;
-        $hasComments = false;
-
+        $lines = [];
         foreach ($items as $item) {
-            $score = $item['sanitary_score'];
-            if ($score !== null && $score !== '' && (int) $score >= 1 && (int) $score <= 3) {
-                $hasSanitaryViolation = true;
-            }
-            if (($item['is_faulty'] ?? '') && $item['is_faulty'] !== 'Ок') {
-                $hasFault = true;
-            }
-            if (($item['lighting'] ?? '') && $item['lighting'] !== 'Ок') {
-                $hasFault = true;
-            }
-            if (trim((string) ($item['comment'] ?? '')) !== '') {
-                $hasComments = true;
+            $deviations = self::rowDeviations($item);
+            if (!empty($deviations)) {
+                $lines[] = $item['title'] . ' — ' . implode(', ', $deviations);
             }
         }
 
-        if (!$hasSanitaryViolation && !$hasFault && !$hasComments) {
-            return '✅ Без нарушений';
-        }
-
-        $parts = [];
-        if ($hasSanitaryViolation) {
-            $parts[] = '⚠ Нарушение санитарных норм';
-        }
-        if ($hasFault) {
-            $parts[] = '⚠ Есть неисправности';
-        }
-        if ($hasComments) {
-            $parts[] = 'Есть замечания';
-        }
-
-        return implode('; ', $parts);
+        return empty($lines) ? 'Норма' : implode('; ', $lines);
     }
 
-    /** true if the row set for a journal has any warning-level condition. */
     public static function hasAnyViolation(array $items): bool
     {
-        return self::summarizeItems($items) !== '✅ Без нарушений';
+        foreach ($items as $item) {
+            if (!empty(self::rowDeviations($item))) {
+                return true;
+            }
+        }
+        return false;
     }
 
-    /**
-     * Splits Russian/Latin text into normalized words, stripping punctuation
-     * and stop-words.
-     */
     public static function tokenize(string $text): array
     {
         $text = mb_strtolower($text);
-        // Keep Cyrillic/Latin letters and digits, split everything else.
         $words = preg_split('/[^\p{L}\p{N}]+/u', $text, -1, PREG_SPLIT_NO_EMPTY);
 
         return array_values(array_filter($words, function ($w) {
@@ -68,11 +67,6 @@ class SummaryService
         }));
     }
 
-    /**
-     * Top-3 most frequent words across a set of comments.
-     * @param string[] $comments
-     * @return array [['word' => ..., 'count' => ...], ...] up to 3 entries
-     */
     public static function topWords(array $comments): array
     {
         $freq = [];
@@ -92,7 +86,6 @@ class SummaryService
         return $result;
     }
 
-    /** Human-readable "Топ слов за период: 1. Пол (упомянуто 4 раза), ..." string. */
     public static function topWordsLabel(array $comments): string
     {
         $top = self::topWords($comments);
@@ -125,7 +118,6 @@ class SummaryService
         return 'раз';
     }
 
-    /** Validation for the "Завершить" action: every row needs faulty/score/lighting set. */
     public static function findIncompleteRows(array $items): array
     {
         $incomplete = [];
