@@ -59,33 +59,40 @@
   </div>
 </form>
 <?php if ($reportFrom && $reportTo): ?>
-  <?php if (empty($reportRows)): ?>
-    <p>За выбранный период завершённых журналов не найдено.</p>
+  <?php if (empty($reportRows) && empty($deviationsByDate)): ?>
+    <p>За выбранный период отклонений не найдено.</p>
   <?php else: ?>
-    <table>
-      <thead>
-        <tr>
-          <th>Дата создания</th>
-          <th>Начальник смены</th>
-          <th>Ответственный</th>
-          <th>Краткая выжимка</th>
-        </tr>
-      </thead>
-      <tbody>
-        <?php foreach ($reportRows as $row): ?>
+    <?php if (!empty($reportRows)): ?>
+      <table>
+        <thead>
           <tr>
-            <td><?= e(date('d.m.Y H:i', strtotime($row['created_at']))) ?></td>
-            <td><?= $row['shift_manager'] ?></td>
-            <td><?= $row['responsible'] ?></td>
-            <td><?= e($row['digest']) ?></td>
+            <th>Дата создания</th>
+            <th>Начальник смены</th>
+            <th>Ответственный</th>
+            <th>Краткая выжимка</th>
           </tr>
+        </thead>
+        <tbody>
+          <?php foreach ($reportRows as $row): ?>
+            <tr>
+              <td><?= e(date('d.m.Y H:i', strtotime($row['created_at']))) ?></td>
+              <td><?= $row['shift_manager'] ?></td>
+              <td><?= $row['responsible'] ?></td>
+              <td><?= e($row['digest']) ?></td>
+            </tr>
+          <?php endforeach; ?>
+        </tbody>
+      </table>
+    <?php endif; ?>
+
+    <?php if (!empty($deviationsByDate)): ?>
+      <div style="background:#fff; padding:14px; margin-top:10px; border-radius:4px; box-shadow:0 1px 2px rgba(0,0,0,.1);">
+        <strong>Отклонения по датам</strong>
+        <?php foreach ($deviationsByDate as $date => $titles): ?>
+          <p><strong><?= e($date) ?>:</strong> <?= e(implode(', ', $titles)) ?></p>
         <?php endforeach; ?>
-      </tbody>
-    </table>
-    <div style="background:#fff; padding:14px; margin-top:10px; border-radius:4px; box-shadow:0 1px 2px rgba(0,0,0,.1);">
-      <strong>Частотный анализ (Топ-3 замечаний)</strong>
-      <p><?= e($topWordsLabel) ?></p>
-    </div>
+      </div>
+    <?php endif; ?>
   <?php endif; ?>
 <?php endif; ?>
 </body>
