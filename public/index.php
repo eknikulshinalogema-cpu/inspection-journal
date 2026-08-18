@@ -84,27 +84,33 @@ function handleList(): void
     $reportRows = [];
     $topWordsLabel = '';
 
+    $deviationsByDate = [];
+
     if ($reportFrom && $reportTo) {
         $completed = $repo->completedInRange($reportFrom, $reportTo);
-        $allComments = [];
 
         foreach ($completed as $j) {
             $items = $repo->itemsFor((int) $j['id']);
-            $reportRows[] = [
-                'created_at' => $j['created_at'],
-                'shift_manager' => userLabel($users, $j['shift_manager_id']),
-                'responsible' => userLabel($users, $j['responsible_id']),
-                'digest' => SummaryService::summarizeItems($items),
-            ];
-            foreach ($items as $it) {
-                $c = trim((string) ($it['comment'] ?? ''));
-                if ($c !== '') {
-                    $allComments[] = $c;
-                }
+            $digest = SummaryService::summarizeItems($items);
+
+            if ($digest !== 'Норма') {
+                $reportRows[] = [
+                    'created_at' => $j['created_at'],
+                    'shift_manager' => userLabel($users, $j['shift_manager_id']),
+                    'responsible' => userLabel($users, $j['responsible_id']),
+                    'digest' => $digest,
+                ];
+            }
+
+            $titles = SummaryService::deviatingRowTitles($items);
+            if (!empty($titles)) {
+                $deviationsByDate[$j['date']] = array_values(array_unique(
+                    array_merge($deviationsByDate[$j['date']] ?? [], $titles)
+                ));
             }
         }
 
-        $topWordsLabel = SummaryService::topWordsLabel($allComments);
+        ksort($deviationsByDate);
     }
 
     include __DIR__ . '/../views/list.php';
