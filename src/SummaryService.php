@@ -131,4 +131,15 @@ class SummaryService
         }
         return $incomplete;
     }
+    /** Список названий строк с отклонениями (без деталей) — для группировки по датам. */
+    public static function deviatingRowTitles(array $items): array
+    {
+        $titles = [];
+        foreach ($items as $item) {
+            if (!empty(self::rowDeviations($item))) {
+                $titles[] = $item['title'];
+            }
+        }
+        return $titles;
+    }
 }
