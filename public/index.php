@@ -148,4 +148,103 @@ function handleJournal(): void
     $repo = new JournalRepository();
     $journal = $repo->find($id);
 
-    if
+    if (!$journal) {
+        http_response_code(404);
+        echo '<h1>Журнал не найден</h1>';
+        return;
+    }
+
+    $users = Auth::listUsers();
+    $usersById = usersById($users);
+    $error = null;
+
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        $action = $_POST['action'] ?? 'save_draft';
+
+        $date = $_POST['date'] ?? $journal['date'];
+        $mgr = $_POST['shift_manager_id'] !== '' ? (int) $_POST['shift_manager_id'] : null;
+        $resp = $_POST['responsible_id'] !== '' ? (int) $_POST['responsible_id'] : null;
+        $repo->updateHeader($id, $date, $mgr, $resp);
+
+        $itemsInput = $_POST['items'] ?? [];
+        $repo->updateItems($id, $itemsInput);
+
+        // Re-fetch to validate against what was just persisted.
+        $freshItems = $repo->itemsFor($id);
+
+        if ($action === 'complete') {
+            $incomplete = SummaryService::findIncompleteRows($freshItems);
+            if (!empty($incomplete)) {
+                $error = 'Заполните "Исправность", "Санитарное состояние" и "Освещение" во всех строках перед завершением.';
+            } else {
+                $repo->setStatus($id, 'completed');
+                header('Location: ?route=list');
+                exit;
+            }
+        } else {
+            $repo->setStatus($id, 'draft');
+            header('Location: ?route=list');
+            exit;
+        }
+
+        $journal = $repo->find($id);
+    }
+
+    $items = $repo->itemsFor($id);
+    $numbers = Numbering::assign($items);
+    $readOnly = $journal['status'] === 'completed';
+
+    include __DIR__ . '/../views/journal.php';
+}
+
+function handleAdmin(): void
+{
+    if (!Auth::isAdmin()) {
+        http_response_code(403);
+        echo '<h1>Доступ запрещён</h1><p>Раздел доступен только администраторам портала.</p>';
+        return;
+    }
+
+    $repo = new SettingsRepository();
+
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        $action = $_POST['action'] ?? '';
+
+        if ($action === 'update_row') {
+            $repo->update((int) $_POST['id'], trim($_POST['title']), trim($_POST['sub_items']));
+        } elseif ($action === 'hide_row') {
+            $repo->setHidden((int) $_POST['id'], true);
+        } elseif ($action === 'show_row') {
+            $repo->setHidden((int) $_POST['id'], false);
+        } elseif ($action === 'add_row') {
+            $repo->add(trim($_POST['title']), trim($_POST['sub_items']));
+        } elseif ($action === 'save_access') {
+            foreach ($_POST['users'] as $userId => $vals) {
+                $repo->saveAccessUser(
+                    (int) $userId,
+                    $vals['name'] ?? '',
+                    isset($vals['can_view']),
+                    isset($vals['can_edit'])
+                );
+            }
+        }
+
+        header('Location: ?route=admin&saved=1');
+        exit;
+    }
+
+    $rows = $repo->all();
+    $portalUsers = [];
+    try {
+        $portalUsers = Auth::listUsers();
+    } catch (\Throwable $e) {
+        // Non-fatal: access management is optional if the users list is unavailable.
+    }
+    $accessByUser = [];
+    foreach ($repo->accessUsers() as $au) {
+        $accessByUser[$au['b24_user_id']] = $au;
+    }
+    $saved = isset($_GET['saved']);
+
+    include __DIR__ . '/../views/admin.php';
+}
