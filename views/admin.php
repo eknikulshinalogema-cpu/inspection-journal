@@ -57,3 +57,43 @@
     <input type="text" name="title" required>
   </div>
   <div class="field">
+    <label>Оборудование</label>
+    <input type="text" name="sub_items">
+  </div>
+  <div class="field" style="flex: 0 0 auto; align-self: flex-end;">
+    <button type="submit">Добавить</button>
+  </div>
+</form>
+
+<h2>Права доступа пользователей</h2>
+<?php if (empty($portalUsers)): ?>
+  <p>Список пользователей портала недоступен.</p>
+<?php else: ?>
+  <form method="post">
+    <input type="hidden" name="action" value="save_access">
+    <table>
+      <thead>
+        <tr><th>Пользователь</th><th style="width:100px;">Просмотр</th><th style="width:100px;">Редактирование</th></tr>
+      </thead>
+      <tbody>
+        <?php foreach ($portalUsers as $u): ?>
+          <?php $existing = $accessByUser[$u['id']] ?? null; ?>
+          <tr>
+            <td>
+              <?= e($u['name']) ?>
+              <input type="hidden" name="users[<?= (int) $u['id'] ?>][name]" value="<?= e($u['name']) ?>">
+            </td>
+            <td><input type="checkbox" name="users[<?= (int) $u['id'] ?>][can_view]" <?= (!$existing || $existing['can_view']) ? 'checked' : '' ?>></td>
+            <td><input type="checkbox" name="users[<?= (int) $u['id'] ?>][can_edit]" <?= ($existing && $existing['can_edit']) ? 'checked' : '' ?>></td>
+          </tr>
+        <?php endforeach; ?>
+      </tbody>
+    </table>
+    <div style="margin-top:12px;">
+      <button type="submit">Сохранить права доступа</button>
+    </div>
+  </form>
+<?php endif; ?>
+
+</body>
+</html>
