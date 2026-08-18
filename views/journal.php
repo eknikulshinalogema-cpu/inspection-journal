@@ -1,14 +1,13 @@
 <?php $pageTitle = 'Журнал от ' . $journal['date']; include __DIR__ . '/_layout_top.php'; ?>
 
+<p><a href="?route=list">&larr; Назад к списку</a></p>
+
 <h1>Журнал осмотра — <?= e($journal['date']) ?>
   <span class="status-<?= e($journal['status']) ?>">
     (<?= $journal['status'] === 'completed' ? 'Завершено' : 'Черновик' ?>)
   </span>
 </h1>
 
-<?php if ($saved): ?>
-  <div class="success-banner">Черновик сохранён.</div>
-<?php endif; ?>
 <?php if ($error): ?>
   <div class="error-banner"><?= e($error) ?></div>
 <?php endif; ?>
@@ -55,7 +54,7 @@
           <td>
             <select name="items[<?= $id ?>][is_faulty]" <?= $readOnly ? 'disabled' : '' ?>>
               <option value="" <?= empty($item['is_faulty']) ? 'selected' : '' ?>>—</option>
-              <?php foreach (['Ок', 'Не ок', 'Ремонт'] as $opt): ?>
+              <?php foreach (['Исправен', 'К исправлению', 'Ремонт'] as $opt): ?>
                 <option value="<?= e($opt) ?>" <?= $item['is_faulty'] === $opt ? 'selected' : '' ?>><?= e($opt) ?></option>
               <?php endforeach; ?>
             </select>
@@ -68,7 +67,7 @@
           <td>
             <select name="items[<?= $id ?>][lighting]" <?= $readOnly ? 'disabled' : '' ?>>
               <option value="" <?= empty($item['lighting']) ? 'selected' : '' ?>>—</option>
-              <?php foreach (['Ок', 'Не ок'] as $opt): ?>
+              <?php foreach (['Включено', 'Отключено'] as $opt): ?>
                 <option value="<?= e($opt) ?>" <?= $item['lighting'] === $opt ? 'selected' : '' ?>><?= e($opt) ?></option>
               <?php endforeach; ?>
             </select>
