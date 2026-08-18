@@ -1,12 +1,9 @@
 <?php $pageTitle = 'Журнал осмотра помещений и оборудования'; include __DIR__ . '/_layout_top.php'; ?>
-
 <h1>Журнал осмотра помещений и оборудования</h1>
-
 <div class="toolbar">
   <a class="button" href="?route=create">+ Создать журнал</a>
   <a class="button secondary" href="?route=admin">Настройки (админ)</a>
 </div>
-
 <table>
   <thead>
     <tr>
@@ -35,12 +32,17 @@
           <a href="?route=journal&id=<?= (int) $j['id'] ?>">
             <?= $j['status'] === 'completed' ? 'Просмотр' : 'Редактировать' ?>
           </a>
+          <br>
+          <form method="post" action="?route=delete" style="display:inline;"
+                onsubmit="return confirm('Удалить журнал за <?= e($j['date']) ?>? Это необратимо.');">
+            <input type="hidden" name="id" value="<?= (int) $j['id'] ?>">
+            <button type="submit" class="danger" style="padding:2px 8px; font-size:12px;">Удалить</button>
+          </form>
         </td>
       </tr>
     <?php endforeach; ?>
   </tbody>
 </table>
-
 <h2>Сводка за период</h2>
 <form method="get" class="form-header">
   <input type="hidden" name="route" value="list">
@@ -56,31 +58,35 @@
     <button type="submit">Сформировать сводку</button>
   </div>
 </form>
-
 <?php if ($reportFrom && $reportTo): ?>
-  <?php if (empty($reportGroups)): ?>
+  <?php if (empty($reportRows)): ?>
     <p>За выбранный период завершённых журналов не найдено.</p>
   <?php else: ?>
-    <?php foreach ($reportGroups as $date => $data): ?>
-      <div style="background:#fff; padding:14px; margin-top:10px; border-radius:4px; box-shadow:0 1px 2px rgba(0,0,0,.1);">
-        <strong>Дата: <?= e($date) ?></strong><br>
-        <?= $data['violation'] ? '⚠ Есть нарушения' : '✅ Ок' ?>
-        <?php if (!empty($data['comments'])): ?>
-          <ul>
-            <?php foreach ($data['comments'] as $c): ?>
-              <li><?= e($c) ?></li>
-            <?php endforeach; ?>
-          </ul>
-        <?php endif; ?>
-      </div>
-    <?php endforeach; ?>
-
+    <table>
+      <thead>
+        <tr>
+          <th>Дата создания</th>
+          <th>Начальник смены</th>
+          <th>Ответственный</th>
+          <th>Краткая выжимка</th>
+        </tr>
+      </thead>
+      <tbody>
+        <?php foreach ($reportRows as $row): ?>
+          <tr>
+            <td><?= e(date('d.m.Y H:i', strtotime($row['created_at']))) ?></td>
+            <td><?= $row['shift_manager'] ?></td>
+            <td><?= $row['responsible'] ?></td>
+            <td><?= e($row['digest']) ?></td>
+          </tr>
+        <?php endforeach; ?>
+      </tbody>
+    </table>
     <div style="background:#fff; padding:14px; margin-top:10px; border-radius:4px; box-shadow:0 1px 2px rgba(0,0,0,.1);">
       <strong>Частотный анализ (Топ-3 замечаний)</strong>
       <p><?= e($topWordsLabel) ?></p>
     </div>
   <?php endif; ?>
 <?php endif; ?>
-
 </body>
 </html>
